@@ -8,16 +8,26 @@ This is the official repository for [**RoPE at the End of Its Rope? Theory, Diag
 
 ## Installation
 
-The first public version is `0.1.0`. Install the Trainer integration with:
+Install RoPE Profiler with:
 
 ```bash
-python -m pip install 'rope-profiler[trainer]==0.1.0'
+pip install rope-profiler
 ```
 
-For an existing Weights & Biases (W&B) training workflow:
+This installs the scoring API and the paper's head presets. If your training
+environment already has compatible Transformers and Accelerate, this command
+also suffices for the Trainer integration.
+
+To install the optional Trainer dependencies as well:
 
 ```bash
-python -m pip install 'rope-profiler[trainer,wandb]==0.1.0'
+pip install 'rope-profiler[trainer]'
+```
+
+To also install Weights & Biases (W&B):
+
+```bash
+pip install 'rope-profiler[trainer,wandb]'
 ```
 
 The core package requires Python 3.10–3.12 and PyTorch >=2.4,<3. The Trainer extra supports Transformers >=4.51,<4.57. Optional dependencies stay optional; importing the core package does not load a model or initialize a logging account. See the [compatibility guide](https://github.com/acetocarmine11/rope-profiler/blob/v0.1.0/docs/COMPATIBILITY.md) for tested combinations.
