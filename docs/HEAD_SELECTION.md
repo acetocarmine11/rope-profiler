@@ -201,8 +201,4 @@ provide `research_tools/` and `examples/`; plotting dependencies are available
 through the optional `research` extra. Research tools do not run automatically,
 initialize an experiment account, or download a checkpoint.
 
-The small-model examples check the interfaces. Separate tests of real Qwen3-8B
-and Llama-3.1-8B-Instruct checkpoints on an RTX A6000 also verified native SDPA
-capture, local scaling, cached generation, and restoration. The measured
-monitoring overhead depends on context length and configuration. See the
-[validation report](VALIDATION.md) for the executed settings and evidence limits.
+The small-model examples check the interfaces.

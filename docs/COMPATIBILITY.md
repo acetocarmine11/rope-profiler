@@ -7,10 +7,10 @@ results for each source revision.
 
 | Component | Installation range | Executed evidence |
 | --- | --- | --- |
-| Python | >=3.10,<3.13 | Python 3.10.20 and 3.12.13 CPU; 3.11.9 CUDA |
-| torch | >=2.4,<3 | 2.4.1 and 2.8.0 CPU; 2.6.0+cu124 CUDA |
-| Transformers extra | >=4.51,<4.57 | 4.51.3 and 4.56.2 CPU suites; 4.56.2 CUDA |
-| accelerate extra | >=1.3,<2 | 1.10.1 with local Trainer; 1.3.0 in the CUDA environment |
+| Python | >=3.10,<3.13 | Python 3.10.20 and 3.12.13 CPU |
+| torch | >=2.4,<3 | 2.4.1 and 2.8.0 CPU |
+| Transformers extra | >=4.51,<4.57 | 4.51.3 and 4.56.2 CPU suites |
+| accelerate extra | >=1.3,<2 | 1.10.1 with local Trainer |
 | W&B extra | >=0.19,<1 | 0.30.0 offline tests and local Trainer example |
 | Research plotting extra | >=3.8,<4 matplotlib | 3.11.2 in the main CPU environment; synthetic and frozen-paper heatmaps |
 
@@ -53,7 +53,6 @@ the source-only research API.
 | Trainer `model_init` replacement and report history | Checked using a real Trainer; existing forwards and callbacks preserved |
 | Prompt prefill in generate | Checked; decode is excluded |
 | CPU two-process statistic reduction | Checked using Gloo; per-example weighting |
-| Native paper 8B checkpoints, BF16 SDPA on RTX A6000 | Checked: output preservation, sparse Q/K, scores, intervention, decode, restoration, paired latency and memory accounting |
 | NCCL/DDP Trainer, tensor parallel, FSDP | Unverified; no global budget or duplicate-row correction |
 | Fused QKV/RoPE, FA2, torch.compile, CUDA graphs, vLLM | Separate adapters and checks needed |
 | MPS float64 diagnostics | Unsupported by the device; no MPS claim |
@@ -65,9 +64,8 @@ helper separately supports native Llama/Qwen3 eager/SDPA inference, prefill and
 single-token cache decode. Tests compare its local per-band coefficients with
 native Q/K and verify shared-KV head isolation, identity restoration and dynamic
 frequency timing. Its mask stays fixed to the context's first native frequency
-grid. The helper uses Q-only scaling. Native SDPA CUDA inference was checked on
-the two paper 8B checkpoints; fused kernels, vLLM, compilation and parallel model
-execution require additional validation. CPU products are checked;
+grid. The helper uses Q-only scaling. Fused kernels, vLLM, compilation and
+parallel model execution require additional validation. CPU products are checked;
 optional accelerator product checks synchronize the device.
 
 In 0.1.0a2 the 14 attention-backend cases, 20 report/lifecycle cases and final
@@ -87,17 +85,8 @@ storage and score-operation stream intervals; these exclude many temporary alloc
 total forward/report/logging cost. Report frequencies are copied to CPU at the
 end of eval; input sampling metadata is read on CPU before capture.
 
-CUDA validation used the frozen 0.1.0a3 wheel on Qwen3-8B and
-Llama-3.1-8B-Instruct with batch size 1, native BF16 SDPA, and 4Q/16K/256-distance
-diagnostics. Five paired repetitions at each of 512, 2048, and 8192 tokens
-measured total monitored wall time including reports and synchronization.
-FP64 median extra time was about 40–52 ms per forward: roughly 48–55% at 512
-tokens, 12–13% at 2048, and 3.4% at 8192. This is evidence for the tested
-configuration and device. See [VALIDATION.md](VALIDATION.md) for the per-model
-results and distinctions between sampled Q/K memory, cache, and process peak
-memory. CUDA stream intervals can include host launch gaps and are not a sum
-of pure kernel times. Distance sampling error and token/head selection error
-must be measured separately.
+Distance sampling error and token/head selection error must be measured
+separately.
 
 See [CI matrix](../.github/workflows/ci.yml), [sampling](REGIONS.md), and
 [release procedure](RELEASING.md).

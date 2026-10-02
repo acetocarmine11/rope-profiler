@@ -1,5 +1,5 @@
 cff-version: "1.2.0"
-message: "If you use RoPE Profiler in your research, please cite the paper in preferred-citation."
+message: "If you find RoPE Profiler helpful in your research, we would appreciate a citation to our paper."
 title: "RoPE Profiler"
 type: software
 authors:
@@ -12,7 +12,7 @@ authors:
 repository-code: "https://github.com/acetocarmine11/rope-profiler"
 url: "https://github.com/acetocarmine11/rope-profiler"
 preferred-citation:
-  type: article
+  type: generic
   title: "RoPE at the End of Its Rope? Theory, Diagnosis, and Mitigation of Long-Context Failures"
   authors:
     - family-names: Wu
@@ -21,6 +21,5 @@ preferred-citation:
       given-names: Yufeng
     - family-names: Peng
       given-names: Hao
-  journal: "arXiv preprint arXiv:2609.39929"
   year: 2026
   url: "https://arxiv.org/abs/2609.39929"

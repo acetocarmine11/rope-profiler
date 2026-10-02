@@ -325,10 +325,7 @@ processes when PyTorch distributed execution is initialized. This does not
 enforce a single global sample budget or remove duplicated sampler rows. Use
 the single-process path for a reported reference curve. `torch.compile` and CUDA
 graph compatibility are not yet verified; Python hooks may affect their
-execution. Native BF16 SDPA runs on the two paper 8B checkpoints have been checked on
-an RTX A6000. See [validation evidence](VALIDATION.md) for the measured
-latency and memory accounting. Other devices and execution paths need their
-own measurements.
+execution.
 
 The installation range is Python 3.10–3.12, torch 2.x (>=2.4), and
 Transformers 4.51–4.56 for the Trainer extra. Installation ranges are distinct
@@ -364,6 +361,6 @@ The example saves `log_history.json`, `monitor_metadata.json`, and
 - [Changes](https://github.com/acetocarmine11/rope-profiler/blob/v0.1.0/CHANGELOG.md)
 
 See the [validation report](VALIDATION.md) for the executed CPU compatibility
-combinations, installed-wheel checks, training example, real-model CUDA results,
-and limits of the current evidence. Repository links become available when the
-source is uploaded; the corresponding files are included locally under `docs/`.
+combinations, installed-wheel checks, training example, and limits of the current
+evidence. The corresponding guides are included under `docs/` in the source
+archive.
