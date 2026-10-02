@@ -1,0 +1,22 @@
+include README.md
+include LICENSE
+include CHANGELOG.md
+include CONTRIBUTING.md
+include CITATION.cff
+recursive-include examples *.py
+recursive-include benchmarks *.py
+recursive-include research_tools *.py
+recursive-include src/rope_profiler/data *.json
+recursive-include tests *.py
+recursive-include docs *.md
+recursive-include tools *.py
+recursive-include .github *.yml
+prune validation
+prune outputs
+prune wandb
+prune release-candidates
+prune candidate
+prune .venv
+prune .venv-compat
+prune .venv-min
+global-exclude *.py[cod]

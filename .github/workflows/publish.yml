@@ -1,0 +1,135 @@
+name: Publish an existing release candidate
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Existing tag used to build the candidate, for example v0.1.0
+        required: true
+        type: string
+      candidate_run_id:
+        description: Successful release.yml run containing the release-candidate artifact
+        required: true
+        type: string
+      index:
+        description: Distribution index
+        required: true
+        type: choice
+        options: [testpypi, pypi]
+        default: testpypi
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ inputs.release_tag }}
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: "3.12"
+      - name: Check candidate identifier and tag
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag }}
+          CANDIDATE_RUN_ID: ${{ inputs.candidate_run_id }}
+        run: |
+          python - <<'PY'
+          import os, runpy, subprocess
+          run_id = os.environ['CANDIDATE_RUN_ID']
+          if not run_id.isascii() or not run_id.isdigit() or int(run_id) < 1:
+              raise SystemExit('candidate_run_id must be a positive workflow run number')
+          expected = 'v' + runpy.run_path('src/rope_profiler/_version.py')['__version__']
+          requested = os.environ['RELEASE_TAG']
+          if requested != expected:
+              raise SystemExit('release tag must match package version: ' + expected)
+          revision = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
+          tagged = subprocess.check_output(['git', 'rev-parse', 'refs/tags/' + requested + '^{commit}'], text=True).strip()
+          if revision != tagged:
+              raise SystemExit('checkout does not match requested release tag')
+          PY
+      - name: Verify candidate build provenance
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          CANDIDATE_RUN_ID: ${{ inputs.candidate_run_id }}
+        run: |
+          python - <<'PY'
+          import json, os, subprocess, urllib.request
+          repository = os.environ['REPOSITORY']
+          request = urllib.request.Request(
+              f"https://api.github.com/repos/{repository}/actions/runs/{os.environ['CANDIDATE_RUN_ID']}",
+              headers={
+                  'Authorization': 'Bearer ' + os.environ['GH_TOKEN'],
+                  'Accept': 'application/vnd.github+json',
+                  'X-GitHub-Api-Version': '2022-11-28',
+              },
+          )
+          with urllib.request.urlopen(request, timeout=30) as response:
+              run = json.load(response)
+          revision = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
+          expected = {
+              'status': 'completed',
+              'conclusion': 'success',
+              'path': '.github/workflows/release.yml',
+              'event': 'workflow_dispatch',
+              'head_sha': revision,
+          }
+          for field, value in expected.items():
+              if run.get(field) != value:
+                  raise SystemExit('candidate build provenance mismatch: ' + field)
+          if run.get('repository', {}).get('full_name') != repository:
+              raise SystemExit('candidate build must belong to this repository')
+          print('Candidate was built successfully from this release commit.')
+          PY
+      # Cross-run retrieval requires a read-only GitHub token. Package files
+      # are checked against the selected tag before entering the publishing job.
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: release-candidate
+          path: candidate
+          run-id: ${{ inputs.candidate_run_id }}
+          github-token: ${{ github.token }}
+      - run: python -m pip install twine "packaging>=24.2"
+      - name: Verify the existing fixed candidate
+        run: |
+          python tools/prepare_release.py --output-dir candidate --mode release --verify-only
+          python -m twine check candidate/*.whl candidate/*.tar.gz
+      - name: Stage only the verified package files
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import shutil
+          destination = Path('dist')
+          destination.mkdir()
+          for pattern in ('*.whl', '*.tar.gz'):
+              for source in Path('candidate').glob(pattern):
+                  shutil.copyfile(source, destination / source.name)
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: publishable-distributions
+          path: dist/*
+
+  publish:
+    needs: verify
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ inputs.index }}
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: publishable-distributions
+          path: dist
+      - uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33
+        with:
+          packages-dir: dist
+          repository-url: ${{ inputs.index == 'testpypi' && 'https://test.pypi.org/legacy/' || 'https://upload.pypi.org/legacy/' }}

@@ -1,0 +1,14 @@
+.venv*/
+.DS_Store
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+build/
+dist/
+release-candidates/
+candidate/
+wandb/
+outputs/
+validation/
+*.log
